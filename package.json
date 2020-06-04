@@ -1,0 +1,42 @@
+{
+  "name": "AsyBalanceCore",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "license": "LGPL-3.0-or-later",
+  "devDependencies": {
+    "@types/adm-zip": "^0.4.32",
+    "@types/iconv-lite": "^0.0.1",
+    "@types/lodash": "^4.14.151",
+    "@types/node": "^14.0.1",
+    "@types/node-persist": "^3.0.0",
+    "@types/request": "^2.48.3",
+    "@types/validator": "^13.0.0",
+    "@types/xml-js": "^1.0.0",
+    "ts-node-dev": "^1.0.0-pre.43",
+    "typescript": "^3.9.0"
+  },
+  "scripts": {
+    "tsc": "tsc",
+    "prepublish": "tsc",
+    "devit": "ts-node-dev --respawn --transpileOnly",
+    "dev": "ts-node-dev --respawn --transpileOnly ./app/app.ts",
+    "prod": "tsc && node ./build/app/app.js",
+    "debug": "tsc && node --inspect-brk ./build/app/app.js",
+    "debugit": "tsc && node --inspect-brk"
+  },
+  "dependencies": {
+    "adm-zip": "^0.4.14",
+    "base64-arraybuffer": "^0.2.0",
+    "charset": "^1.0.1",
+    "iconv-lite": "^0.5.0",
+    "lodash": "^4.17.15",
+    "log4js": "^6.2.1",
+    "node-persist": "^3.0.5",
+    "reflect-metadata": "^0.1.13",
+    "request": "^2.88.0",
+    "sleep-promise": "^8.0.1",
+    "vm2": "^3.9.1",
+    "xml-js": "^1.6.11"
+  }
+}
