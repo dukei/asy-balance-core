@@ -18,7 +18,7 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "prepare": "tsc",
+    "prepare": "tsc --sourceMap false -d true",
     "devit": "ts-node-dev --respawn --transpileOnly",
     "dev": "ts-node-dev --respawn --transpileOnly ./app/app.ts",
     "prod": "tsc && node ./build/app/app.js",
