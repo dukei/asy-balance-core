@@ -96,6 +96,26 @@ export class AsyBalanceProvider {
         return this.script;
     }
 
+    public async getPreferences(): Promise<string|null>{
+        let elem = this.manifest.files.preferences;
+        if(!elem)
+            return null;
+        let fname = getText(elem);
+        if(!fname)
+            return null;
+        return await this.files.getText(fname);
+    }
+
+    public async getIcon(): Promise<Buffer|null>{
+        let elem = this.manifest.files.icon;
+        if(!elem)
+            return null;
+        let fname = getText(elem);
+        if(!fname)
+            return null;
+        return await this.files.getFile(fname);
+    }
+
     public async execute(params: ExecutionParams): Promise<AsyBalanceResult[]>{
         const accId = params.accId || crypto.createHash('md5').update(JSON.stringify(params.preferences) || 'undefined').digest('hex');
         const logName = `ID:${accId} (${this.id})`;
