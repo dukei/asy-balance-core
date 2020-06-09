@@ -27,8 +27,6 @@ export interface AsyBalanceInnerApi {
 
     sleep(ms: number): Promise<StringCallResponse<void>>;
 
-    retrieveCode(comment: string, image: string, options: string | AsyRetrieveOptions | null): Promise<StringCallResponse<string>>;
-
     getCapabilities(): Promise<StringCallResponse<AsyCapabilities>>;
 }
 
@@ -43,6 +41,38 @@ export interface AsyBalanceInnerResultApi{
 
 export interface AsyBalanceInnerTraceApi{
     trace(msg: string, callee: string): Promise<StringCallResponse<void>>;
+}
+
+export enum AsyRetrieveType {
+    CODE= 'CODE',
+    IMAGE= 'IMAGE',
+    RECAPTCHA = 'RECAPTCHA'
+}
+
+export interface AsyRetrieveOptions {
+    type: AsyRetrieveType,
+    prompt?: string,
+    time?: number
+}
+
+export interface AsyRetrieveOptionsCode extends AsyRetrieveOptions {
+    inputType?: AsyRetrieveInputType
+}
+
+export interface AsyRetrieveOptionsImage extends AsyRetrieveOptionsCode {
+    image: string
+}
+
+export interface AsyRetrieveOptionsRecaptcha extends AsyRetrieveOptions {
+    url: string
+    userAgent?: string
+    sitekey: string
+    subtype?: 'V2' | 'V3'
+    action?: string
+}
+
+export interface AsyBalanceInnerRetrieveApi{
+    retrieveCode(options: string | AsyRetrieveOptions): Promise<StringCallResponse<string>>;
 }
 
 export interface AsyBalanceApi {
@@ -155,7 +185,7 @@ export interface AsyBalanceApi {
      * @param image
      * @param options
      */
-    retrieveCode(comment: string, image?: string | null, options?: RetrieveParams): Promise<string>;
+    retrieveCode(options?: AsyRetrieveOptions): Promise<string>;
 
     /**
      * Clears authentication parameters in this session
@@ -213,6 +243,7 @@ export type AsyBalanceParams = {
     apiStorage?: AsyBalanceInnerStorageApi,
     apiResult?: AsyBalanceInnerResultApi,
     apiTrace?: AsyBalanceInnerTraceApi,
+    apiRetrieve?: AsyBalanceInnerRetrieveApi,
     converter_main?: (data: AsyBalanceResult) => AsyBalanceResult,
 }
 
@@ -224,15 +255,12 @@ export type CookieParams = {
     allcookies?: AsyCookie[]
 }
 
-export enum RetrieveInputType {
+export enum AsyRetrieveInputType {
     number = 'number',
     text = 'text',
+    textPassword = 'textPassword',
+    numberPassword = 'numberPassword',
     textEmailAddress = 'textEmailAddress',
-}
-
-export type RetrieveParams = {
-    inputType: RetrieveInputType
-    time: number
 }
 
 export type AsyCookieBase = {
@@ -265,6 +293,7 @@ export enum OPTIONS {
     SSL_ENABLED_CIPHER_SUITES_REMOVE = "sslEnabledCipherSuitesRemove", //[string, string,...]
     PER_DOMAIN = "perDomain", //[{string => {options}, ...]
     HTTP_METHOD = "httpMethod", //POST|GET|PUT|DELETE|OPTIONS|TRACE|HEAD
+    MANUAL_REDIRECTS = "manualRedirects", //default false
 }
 
 export enum HTTP_METHOD {
@@ -285,6 +314,7 @@ type OptionsParamSimple = {
     [OPTIONS.FORCE_CHARSET]?: string,
     [OPTIONS.REQUEST_CHARSET]?: string,
     [OPTIONS.HTTP_METHOD]?: HTTP_METHOD,
+    [OPTIONS.MANUAL_REDIRECTS]?: boolean,
     [OPTIONS.PROXY]?: string,
     [name: string]: any,
 }
@@ -309,11 +339,6 @@ export type StringCallResponse<T> = string | CallResponse<T>;
 
 export type AsyCapabilities = {
 
-}
-
-export type AsyRetrieveOptions = {
-    inputType?: string,
-    time?: number
 }
 
 export type AsyAuthParams = {

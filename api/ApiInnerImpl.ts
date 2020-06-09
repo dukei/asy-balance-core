@@ -8,7 +8,6 @@ import {
     AsyCookie,
     AsyCookieExt,
     AsyResponseInterface,
-    AsyRetrieveOptions,
     OPTIONS,
     OptionsParam,
     StringBundle,
@@ -186,6 +185,7 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
         let method = _options[OPTIONS.HTTP_METHOD] || abd_getOption(local_options, OPTIONS.HTTP_METHOD, domain) || 'POST';
         let defCharset = abd_getOption(local_options, OPTIONS.DEFAULT_CHARSET, domain) || DEFAULT_CHARSET;
         let input_charset = abd_getOption(local_options, OPTIONS.REQUEST_CHARSET, domain) || defCharset;
+        const manual_redirects = abd_getOption(local_options, OPTIONS.MANUAL_REDIRECTS, domain);
 
         let _data: Buffer;
         if(data && !/^utf-8|base64|binary$/i.test(input_charset))
@@ -226,6 +226,7 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
                 body: _data,
                 auth: this.auth,
                 proxy: proxy,
+                followAllRedirects: !manual_redirects,
             }, (err: any, response: request.Response, body: any) => {
                 if(err)
                     reject(err);
@@ -264,10 +265,6 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
         };
 
         return {payload: params}
-    }
-
-    async retrieveCode(comment: string, image: string, options: string | AsyRetrieveOptions | null): Promise<StringCallResponse<string>> {
-        throw new Error("Not implemented");
     }
 
     setAuthentication(name: string, pass: string, authscope: string | AsyAuthParams | null): Promise<StringCallResponse<void>> {

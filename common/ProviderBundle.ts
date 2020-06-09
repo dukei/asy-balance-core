@@ -2,7 +2,7 @@ import ProviderFiles, {ProviderFilesMaker} from "./ProviderFiles";
 import XmlJS, {ElementCompact} from 'xml-js';
 import log from "./log";
 import {
-    AsyBalanceInnerResultApi,
+    AsyBalanceInnerResultApi, AsyBalanceInnerRetrieveApi,
     AsyBalanceInnerStorageApi,
     AsyBalanceInnerTraceApi,
     AsyBalancePreferences, AsyBalanceResult
@@ -40,6 +40,7 @@ export type ExecutionParams = {
     apiStorage?: AsyBalanceInnerStorageApi
     apiResult?: AsyBalanceInnerResultApi
     apiTrace?: AsyBalanceInnerTraceApi
+    apiRetrieve?: AsyBalanceInnerRetrieveApi
     converter_main?: (data: AsyBalanceResult) => AsyBalanceResult
     proxy?: string
     timeout?: number
@@ -106,6 +107,11 @@ export class AsyBalanceProvider {
         return await this.files.getText(fname);
     }
 
+    public getCounters(): string{
+        let xml = XmlJS.js2xml(this.manifest.counters, {compact: true});
+        return xml;
+    }
+
     public async getIcon(): Promise<Buffer|null>{
         let elem = this.manifest.files.icon;
         if(!elem)
@@ -135,6 +141,7 @@ export class AsyBalanceProvider {
             apiStorage: stimpl,
             apiResult: rtimpl,
             apiTrace: trimpl,
+            apiRetrieve: params.apiRetrieve,
             preferences: params.preferences,
         });
 

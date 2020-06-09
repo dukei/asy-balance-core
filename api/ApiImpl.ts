@@ -15,7 +15,8 @@ var g_AnyBalanceApiParams = {
 
 import {
 	AsyAuthParams,
-	AsyBalanceApi, AsyBalanceParams,
+	AsyBalanceApi,
+	AsyBalanceParams,
 	AsyBalancePreferences,
 	AsyBalanceResult,
 	AsyBalanceResultError,
@@ -23,8 +24,12 @@ import {
 	AsyCapabilities,
 	AsyCookie,
 	AsyCookieExt,
-	AsyResponse, AsyResponseInterface,
+	AsyResponse,
+	AsyResponseInterface,
+	AsyRetrieveInputType,
 	AsyRetrieveOptions,
+	AsyRetrieveOptionsImage,
+	AsyRetrieveType,
 	CallErrorResponse,
 	CallResponse,
 	CallSuccessResponse,
@@ -36,7 +41,7 @@ import {
 	StringTuple
 } from "./api";
 
-import {encode, decode} from "base64-arraybuffer";
+import {decode, encode} from "base64-arraybuffer";
 
 const reCounterLastWord = /\.[^.]*$/;
 const cookiesParamName = '!@#AB_COOKIES';
@@ -355,14 +360,24 @@ export default class AsyBalance implements AsyBalanceApi{
 		return this.callAnyBalance(method, [validated]);
 	}
 
-	private async api_retrieveCode(comment: string, image: string, options: AsyRetrieveOptions | null): Promise<string>{
+	private async api_retrieveCode(options?: AsyRetrieveOptions): Promise<string>{
 		const method = 'retrieveCode';
+		if(!options)
+			options = {type: AsyRetrieveType.CODE};
 		let _options: string = '';
-		if(this.#global.api_stringified && options)
+		let _optionsImage: AsyRetrieveOptionsImage = options as AsyRetrieveOptionsImage;
+		const image = _optionsImage.image;
+		if(!options.type)
+			options.type = image ? AsyRetrieveType.IMAGE : AsyRetrieveType.CODE;
+
+		if(this.#global.api_stringified){
 			_options = JSON.stringify(options);
-		if(this.#global.api)
-			return this.checkCallResponse(await this.#global.api.retrieveCode(comment, image, _options || options));
-		return this.callAnyBalance(method, [comment, image, options]);
+		}
+
+		if(this.#global.apiRetrieve)
+			return this.checkCallResponse(await this.#global.apiRetrieve.retrieveCode(_options || options));
+
+		return this.callAnyBalance(method, [_optionsImage]);
 	}
 
 	private async api_loadData(): Promise<string>{
@@ -658,8 +673,8 @@ export default class AsyBalance implements AsyBalanceApi{
 	 * @param image
 	 * @param options
 	 */
-	public async retrieveCode(comment: string, image?: string | null, options?: AsyRetrieveOptions): Promise<string>{
-		return await this.api_retrieveCode(comment, image || '', options || null);
+	public async retrieveCode(options?: AsyRetrieveOptions): Promise<string>{
+		return await this.api_retrieveCode(options);
 	}
 
 	/**
@@ -725,7 +740,9 @@ export default class AsyBalance implements AsyBalanceApi{
 	/**
 	 * Options for setOptions
 	 */
-	public static OPTIONS = OPTIONS;
+	public static readonly OPTIONS = OPTIONS;
+	public static readonly RetrieveType = AsyRetrieveType;
+	public static readonly RetrieveInputType = AsyRetrieveInputType;
 
 	/**
 	 * Sets several options for api
