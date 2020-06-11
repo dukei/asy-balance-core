@@ -84,7 +84,7 @@ class AsyBalanceSystemError extends Error{
 
 class AsyResponseObject implements AsyResponse{
 
-    getString(): string {
+    getText(): string {
     	const body = this.data.body;
 		let rets: string;
 		if(typeof body === 'string'){
@@ -111,7 +111,7 @@ class AsyResponseObject implements AsyResponse{
     }
 
     getJson(): any {
-    	return JSON.parse(this.getString());
+    	return JSON.parse(this.getText());
 	}
 
     getLastUrl(): string {

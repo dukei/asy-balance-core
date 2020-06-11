@@ -353,7 +353,7 @@ export interface AsyResponseInterface{
 }
 
 export interface AsyResponse extends AsyResponseInterface{
-    getString(): string;
+    getText(): string;
     getBuffer(): ArrayBuffer;
     getJson(): any;
 

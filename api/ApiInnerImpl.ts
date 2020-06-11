@@ -20,6 +20,7 @@ import request, {CookieJar} from "request";
 import * as tough from "tough-cookie";
 import * as util from "util";
 import iconv from "iconv-lite";
+import {SocksProxyAgent} from "socks-proxy-agent";
 
 const NodePersist = require('node-persist');
 const Charset = require('charset');
@@ -93,6 +94,7 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
     private storage?: any;
     private options: OptionsParam = {};
     private auth?: { pass: string; user: string };
+    private agents: {[url: string]: SocksProxyAgent} = {};
 
     constructor(params: {
         accId?: string
@@ -110,8 +112,17 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
             gzip: true,
             encoding: null,
             strictSSL: false,
-            forever: true,
+            agentOptions: {keepAlive:true},
         })
+    }
+
+    private getAgent(proxyUrl: string): SocksProxyAgent{
+        let agent = this.agents[proxyUrl];
+        if(agent)
+            return agent;
+        agent = new SocksProxyAgent(proxyUrl);
+        this.agents[proxyUrl] = agent;
+        return agent;
     }
 
     clearAuthentication(): Promise<StringCallResponse<void>> {
@@ -187,7 +198,7 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
         let input_charset = abd_getOption(local_options, OPTIONS.REQUEST_CHARSET, domain) || defCharset;
         const manual_redirects = abd_getOption(local_options, OPTIONS.MANUAL_REDIRECTS, domain);
 
-        let _data: Buffer;
+        let _data: Buffer|undefined = undefined;
         if(data && !/^utf-8|base64|binary$/i.test(input_charset))
             throw new Error('Only UTF-8, base64 or binary request charset is supported!');
 
@@ -216,18 +227,27 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
             _data = Buffer.from(data, 'utf-8');
         }
 
-        let proxy = abd_getOption(local_options, OPTIONS.PROXY, domain);
+        const requestOptions: request.CoreOptions = {
+            method: method,
+            headers: _headers,
+            auth: this.auth,
+            body: _data,
+            followAllRedirects: !manual_redirects,
+        };
 
+        const proxy = abd_getOption(local_options, OPTIONS.PROXY, domain);
+        if(proxy) {
+            if (/^socks\d*:\/\//i.test(proxy)) {
+                requestOptions.agent = this.getAgent(proxy);
+            } else {
+                requestOptions.proxy = proxy;
+            }
+        }
+
+//        console.log("Request to ", url, requestOptions);
         let response: request.Response = await new Promise((resolve, reject) => {
-            this.request({
-                url: url,
-                method: method,
-                headers: _headers,
-                body: _data,
-                auth: this.auth,
-                proxy: proxy,
-                followAllRedirects: !manual_redirects,
-            }, (err: any, response: request.Response, body: any) => {
+            this.request(url, requestOptions, (err: any, response: request.Response, body: any) => {
+//                console.log(url, err, response.body);
                 if(err)
                     reject(err);
                 resolve(response);
