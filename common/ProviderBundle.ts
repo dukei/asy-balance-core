@@ -35,6 +35,7 @@ function getText(element: ElementCompact): string | undefined{
 }
 
 export type ExecutionParams = {
+    task?: string
     accId?: string
     preferences?: AsyBalancePreferences
     apiStorage?: AsyBalanceInnerStorageApi
@@ -160,7 +161,7 @@ export class AsyBalanceProvider {
 
         try {
             await vm.run(`${script}(async()=>{
-                    await AnyBalance.execute(main);
+                    await AnyBalance.execute(() => main(${JSON.stringify(params.task)}));
                 })();
 	        `);
 
