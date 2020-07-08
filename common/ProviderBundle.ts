@@ -1,5 +1,5 @@
 import ProviderFiles, {ProviderFilesMaker} from "./ProviderFiles";
-import XmlJS, {ElementCompact} from 'xml-js';
+import XmlJS, {ElementCompact, Element} from 'xml-js';
 import log from "./log";
 import {
     AsyBalanceInnerResultApi, AsyBalanceInnerRetrieveApi,
@@ -121,6 +121,36 @@ export class AsyBalanceProvider {
         if(!fname)
             return null;
         return await this.files.getFile(fname);
+    }
+
+    public async getMaskedPreferences(): Promise<string[]> {
+        let elem = this.manifest.files.preferences;
+        if(!elem)
+            return [];
+        let fname = getText(elem);
+        if(!fname)
+            return [];
+        let prefs = await this.files.getText(fname);
+        if(!prefs)
+            return [];
+        let prefsElem = XmlJS.xml2js(prefs, {compact: false}) as Element;
+
+        let maskElements = this.findElements(prefsElem, elem => elem.name === 'EditTextPreference' && /password/i.test(elem.attributes?.inputType + ''));
+        return maskElements.map(e => e.attributes?.key + '');
+    }
+
+    private findElements(elem: Element, pred: (elem: Element) => boolean): Element[] {
+        const ret: Element[] = [];
+        if(pred(elem))
+            ret.push(elem);
+        if(elem.elements) {
+            for (let e of elem.elements){
+                const ret1 = this.findElements(e, pred);
+                if(ret1.length)
+                    ret.push.apply(ret, ret1);
+            }
+        }
+        return ret;
     }
 
     public async execute(params: ExecutionParams): Promise<AsyBalanceResult[]>{
