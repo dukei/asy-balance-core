@@ -45,6 +45,7 @@ export type ExecutionParams = {
     converter_main?: (data: AsyBalanceResult) => AsyBalanceResult
     proxy?: string
     timeout?: number
+    outer?: object
 }
 
 export class AsyBalanceProvider {
@@ -181,7 +182,8 @@ export class AsyBalanceProvider {
         const vm = new VM({
             timeout: params.timeout || 3000000,
             sandbox: {
-                AnyBalance: AnyBalance
+                AnyBalance: AnyBalance,
+                Outer: params.outer
             }
         });
 
