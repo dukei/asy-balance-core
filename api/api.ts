@@ -1,6 +1,8 @@
 export interface AsyBalanceResultError {
     readonly error: true;
     readonly message: string;
+    readonly fatal?: boolean;
+    readonly allow_retry?: boolean;
     readonly e?: Error;
     readonly investigate?: boolean;
     readonly unhandled?: boolean;
@@ -76,6 +78,8 @@ export interface AsyBalanceInnerRetrieveApi{
 }
 
 export interface AsyBalanceApi {
+    Error: new (message: string, ex?: AsyBalanceUserErrorParam) => Error;
+
     getPreferences(): AsyBalancePreferences;
     /**
      * Возвращает возможности этой реализации API

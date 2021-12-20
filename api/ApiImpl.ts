@@ -817,7 +817,7 @@ export default class AsyBalance implements AsyBalanceApi{
 					this.#setResultCalled = false;
 					try {
 						await main();
-					} catch (e) {
+					} catch (e: any) {
 						await this.setResult(this.errorToResult(e));
 						if (e && e.fatal) {
 							this.trace('Caught fatal error, breaking iterations');

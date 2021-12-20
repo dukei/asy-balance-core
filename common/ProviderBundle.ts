@@ -192,13 +192,17 @@ export class AsyBalanceProvider {
         log.info('Starting account ' + logName);
 
         try {
-            await vm.run(`${script}(async()=>{
+            //В случае использования browserify main объявляется как global.main.
+            // Для подхватывания её нужно объявить main почему-то
+            await vm.run(`${script}
+                var main=global.main;
+                (async()=>{
                     await AnyBalance.execute(() => main(${JSON.stringify(params.task)}));
                 })();
 	        `);
 
             log.info("Account " + logName + " finished successfully!");
-        }catch(e){
+        }catch(e: any){
             log.error("Account " + logName + " execution error: " + e.stack);
         }
 

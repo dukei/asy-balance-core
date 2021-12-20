@@ -5,44 +5,37 @@ import log from "../common/log";
 import AsyBalanceResultImpl from "../api/ApiInnerResultImpl";
 import AsyBalanceNodeStorageImpl from "../api/ApiInnerStorageImpl";
 import AsyBalanceTraceImpl from "../api/ApiInnerTraceImpl";
+import {AsyBalanceInnerRetrieveApi, AsyRetrieveOptions, StringCallResponse} from "../api/api";
+import AsyBalanceRetrieveImpl from "../api/ApiInnerRetrieveImpl";
+
+class ApiRetrieve extends AsyBalanceRetrieveImpl {
+	async retrieveCode(options: string | AsyRetrieveOptions): Promise<StringCallResponse<string>> {
+		console.log(JSON.stringify(options));
+		return {payload: '2532'};
+	}
+
+}
 
 (async() => {
-	let asimpl = new AsyBalanceImpl({
-//        proxy: 'socks5://localhost:9150/'
-    });
 
 	log.info("hi, logging!");
-	let prov = await AsyBalanceProvider.create("C:\\SrcRep\\asy-balance-providers\\ab2-test-tor\\provider.zip");
+	let prov = await AsyBalanceProvider.create("C:\\krawlly\\providers-asy\\ab2-test-srv\\provider.zip");
 
 	let asiri = new AsyBalanceResultImpl();
 	let asisi = new AsyBalanceNodeStorageImpl("test");
 	let asiti = new AsyBalanceTraceImpl();
-	let AnyBalance = new AsyBalance({
-		api: asimpl,
-		apiStorage: asisi,
+
+	const result = await prov.execute({
+		apiRetrieve: new ApiRetrieve(),
 		apiResult: asiri,
+		apiStorage: asisi,
 		apiTrace: asiti,
-		preferences: undefined,
-	});
+		preferences: {
+			login: 'captcha',
+			password: 'pass'
+		},
+		accId: "sss",
+	})
 
-	const {VM} = require('vm2');
-
-	const vm = new VM({
-		timeout: 3000000,
-		sandbox: {
-			AnyBalance: AnyBalance
-		}
-	});
-
-	let script = await prov.getScript();
-
-
-	//console.log(script);
-
-    await vm.run(`${script}(async()=>{
-            await AnyBalance.execute(main);
-    	})();
-	`);
-
-    console.log(asiri.getResults());
+    console.log(result);
 })();
