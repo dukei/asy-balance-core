@@ -37,7 +37,7 @@
     "request": "^2.88.0",
     "sleep-promise": "^8.0.1",
     "socks-proxy-agent": "^5.0.0",
-    "vm2": "^3.9.1",
+    "vm2": "^3.9.6",
     "xml-js": "^1.6.11"
   }
 }
