@@ -704,7 +704,7 @@ export default class AsyBalance implements AsyBalanceApi{
 		if (this.#global.converter_main) {
 			try {
 				data = this.#global.converter_main(data); //Calling converter if it exists
-			} catch (e) {
+			} catch(e: any) {
 				//Экспешны не должны выходить из setResult
 				data = this.errorToResult(e);
 			}
@@ -719,20 +719,22 @@ export default class AsyBalance implements AsyBalanceApi{
 		} else if (e && e.name === 'AnyBalanceApiUserError') {
 			result = new AsyBalanceResultErrorImpl(e.message, e);
 		} else {
-			let message = 'Unhandled exception in user script:';
+			let message_ex = 'Unhandled exception in user script:';
+			let message = '';
 			if(e && typeof e === 'object'){
-				message += '\nname: ' + e.name + '\nmessage: ' + e.message;
+				message = e.message || 'Unexpected error';
+				message_ex += '\nname: ' + e.name + '\nmessage: ' + e.message;
 				for (var key in e) {
 					if(/^(name|message|stack)$/.test(key))
 						continue; //The intrinsic properties not always enumerable, so let's force necessary ones
-					message += '\n' + key + ': ' + (e as any)[key];
+					message_ex += '\n' + key + ': ' + (e as any)[key];
 				}
 				if(e.stack)
-					message += '\nCall stack:\n' + e.stack;
+					message_ex += '\nCall stack:\n' + e.stack;
 			}else{
-				message = '' + e;
+				message = message_ex = '' + e;
 			}
-			result =  new AsyBalanceResultErrorImpl(message, new AsyBalanceUserError(message, e));
+			result =  new AsyBalanceResultErrorImpl(message, new AsyBalanceUserError(message, {error: e, details: message_ex}));
 		}
 		return result;
 	}
@@ -833,7 +835,7 @@ export default class AsyBalance implements AsyBalanceApi{
 			} else {
 				await main(); // This is the starting point of user script
 			}
-		}catch(e){
+		}catch(e: any){
 			await this.setResult(this.errorToResult(e));
 		}finally{
 			handleSetResultNotCalled();
