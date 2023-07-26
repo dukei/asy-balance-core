@@ -3,9 +3,16 @@ export interface AsyBalanceResultError {
     readonly message: string;
     readonly fatal?: boolean;
     readonly allow_retry?: boolean;
-    readonly e?: Error;
+    readonly e?: AnyBalanceResultErrorDetails;
     readonly investigate?: boolean;
     readonly unhandled?: boolean;
+}
+
+export interface AnyBalanceResultErrorDetails {
+    name?: string
+    ex?: {[name: string]: any}
+    details?: string
+    stack?: string
 }
 
 export interface AsyBalanceResultSuccess {

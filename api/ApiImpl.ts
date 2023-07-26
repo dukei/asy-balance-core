@@ -14,6 +14,7 @@ var g_AnyBalanceApiParams = {
 */
 
 import {
+	AnyBalanceResultErrorDetails,
 	AsyAuthParams,
 	AsyBalanceApi,
 	AsyBalanceParams,
@@ -48,15 +49,35 @@ const cookiesParamName = '!@#AB_COOKIES';
 
 class AsyBalanceResultErrorImpl implements AsyBalanceResultError {
 	constructor(message: string, e?: Error) {
-		this.e = e;
+		this.e = {
+			name: e?.name,
+			stack: e?.stack,
+			details: e?.message || 'Unknown error',
+		};
+
 		this.message = message;
-		if(e && (!e.name || !/AnyBalance/i.test(e.name))){
+
+		if(/AnyBalance/i.test(e?.name || '')) {
+			this.e.ex = (e as any).ex;
+		}else{
 			this.investigate = true;
 			this.unhandled = true;
+			this.e.details = 'Unhandled exception in user script: ' + this.e.details;
+			if(e && typeof e === 'object'){
+				let message_ex = '';
+				for (let key in e) {
+					if(/^(name|message|stack)$/.test(key))
+						continue; //The intrinsic properties not always enumerable, so let's force necessary ones
+					message_ex += '\n' + key + ': ' + (e as any)[key];
+				}
+				this.e.details += message_ex;
+			}else{
+				this.e.details += '\nPlain error: ' + e;
+			}
 		}
 	}
 
-	readonly e?: Error;
+	readonly e?: AnyBalanceResultErrorDetails;
 	readonly error = true;
 	investigate?: boolean;
 	readonly message: string;
@@ -713,30 +734,7 @@ export default class AsyBalance implements AsyBalanceApi{
 	}
 
 	public errorToResult(e: any): AsyBalanceResult{
-		let result: AsyBalanceResult;
-		if (e && e.name === 'AnyBalanceApiError') {
-			result = new AsyBalanceResultErrorImpl(e.message);
-		} else if (e && e.name === 'AnyBalanceApiUserError') {
-			result = new AsyBalanceResultErrorImpl(e.message, e);
-		} else {
-			let message_ex = 'Unhandled exception in user script:';
-			let message = '';
-			if(e && typeof e === 'object'){
-				message = e.message || 'Unexpected error';
-				message_ex += '\nname: ' + e.name + '\nmessage: ' + e.message;
-				for (var key in e) {
-					if(/^(name|message|stack)$/.test(key))
-						continue; //The intrinsic properties not always enumerable, so let's force necessary ones
-					message_ex += '\n' + key + ': ' + (e as any)[key];
-				}
-				if(e.stack)
-					message_ex += '\nCall stack:\n' + e.stack;
-			}else{
-				message = message_ex = '' + e;
-			}
-			result =  new AsyBalanceResultErrorImpl(message, new AsyBalanceUserError(message, {error: e, details: message_ex}));
-		}
-		return result;
+		return new AsyBalanceResultErrorImpl(e.message, e);
 	}
 
 	/**
