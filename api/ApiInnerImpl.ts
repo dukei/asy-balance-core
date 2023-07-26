@@ -136,15 +136,19 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
 
     async getCookies(): Promise<StringCallResponse<AsyCookie[]>> {
         let cookies = await util.promisify(this.cookieStore.getAllCookies.bind(this.cookieStore))();
+        const now = +new Date();
         let outCookies: AsyCookie[] = [];
         for(let c of cookies){
             let domain = c.domain;
-            if(c.hostOnly === false && domain)
+            if(!c.hostOnly && domain)
                 domain = '.' + domain;
 
             let expires: string | undefined = undefined;
-            if(c.expires instanceof Date && !isNaN(c.expires.getTime()))
-                expires = c.expires.toDateString();
+            if(c.expires instanceof Date && !isNaN(c.expires.getTime())) {
+                if(now > c.expires.getTime())
+                    break; //Не возвращаем устаревшие куки
+                expires = c.expires.toString();
+            }
 
             outCookies.push({
                 name: c.key,
@@ -297,23 +301,26 @@ export default class AsyBalanceImpl implements AsyBalanceInnerApi{
 
     setCookie(domain: string, name: string, value: string | null, params: string | AsyCookieExt | null): Promise<StringCallResponse<void>> {
         let _params: AsyCookieExt = typeof(params) === 'string' ? JSON.parse(params) : params || {};
-        let expires = null;
+        let expires: Date;
         if(value === null)
             expires = new Date(1);
         else if(_params.expires)
             expires = new Date(_params.expires);
+        else
+            expires = new Date(Infinity); //Почему-то таф куки обязательно ожидает дату
 
         let cookieProps: tough.Cookie.Properties = {
             key: name,
             value: value || undefined,
-            expires: expires || new Date(Infinity),
+            expires: expires,
             httpOnly: _params.httpOnly,
+            hostOnly: true, //Will correct it a bit later
             domain: domain,
             path: _params.path,
-            secure: _params.secure,
-            hostOnly: true,
+            secure: _params.secure
         };
 
+        //Корректируем домен, точку перед ним и hostOnly
         if(domain.startsWith('.')){
             cookieProps.hostOnly = false;
             domain = domain.substr(1);
