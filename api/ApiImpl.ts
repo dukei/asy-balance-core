@@ -733,7 +733,7 @@ export default class AsyBalance implements AsyBalanceApi{
 		await this.api_setResult(data);
 	}
 
-	public errorToResult(e: any): AsyBalanceResult{
+	public errorToResult(e: any): AsyBalanceResultError {
 		return new AsyBalanceResultErrorImpl(e.message, e);
 	}
 
@@ -797,10 +797,10 @@ export default class AsyBalance implements AsyBalanceApi{
 		const preferences = this.getPreferences();
 		const countersSet = preferences.ab$countersSet;
 
-		const handleSetResultNotCalled = () => {
+		const handleSetResultNotCalled = async () => {
 			if (!this.#setResultCalled) {
 				//Это является ошибкой только в синхронном режиме.
-				this.setResult({
+				await this.setResult({
 					error : true,
 					message : "main() exited without calling setResult()"
 				});
@@ -820,15 +820,15 @@ export default class AsyBalance implements AsyBalanceApi{
 					} catch (e: any) {
 						await this.setResult(this.errorToResult(e));
 						if (e && e.fatal) {
-							this.trace('Caught fatal error, breaking iterations');
+							await this.trace('Caught fatal error, breaking iterations');
 							break;
 						}
 						if (!this.#loginSuccessful) {
-							this.trace('Login was not successful, breaking iterations');
+							await this.trace('Login was not successful, breaking iterations');
 							break;
 						}
 					}
-					handleSetResultNotCalled();
+					await handleSetResultNotCalled();
 				}
 			} else {
 				await main(); // This is the starting point of user script
@@ -836,7 +836,7 @@ export default class AsyBalance implements AsyBalanceApi{
 		}catch(e: any){
 			await this.setResult(this.errorToResult(e));
 		}finally{
-			handleSetResultNotCalled();
+			await handleSetResultNotCalled();
 		}
 	}
 
